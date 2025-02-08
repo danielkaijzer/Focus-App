@@ -1,6 +1,16 @@
 external_libs/GazeTracking/
 external_libs/openFace/
 
+# Ignore specific files
+Post-Session_Analysis.ipynb
+gaze_heatmap_overlay.png
+test_screenshot.png
+gaze_heatmap.png
+
+# Ignore dynamically named CSV files
+gaze_tracking_*.csv
+screenshot_metadata_*.csv
+
 
 **/.DS_Store
 # Byte-compiled / optimized / DLL files
