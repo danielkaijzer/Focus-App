@@ -1,6 +1,8 @@
 external_libs/GazeTracking/
 external_libs/openFace/
 
+
+**/.DS_Store
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
