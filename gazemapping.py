@@ -95,8 +95,8 @@ CALIBRATION_POINTS = [
     (screen_width * 0.05, screen_height * 0.95),       # Very near bottom-left
     (screen_width * 0.95, screen_height * 0.95),       # Very near bottom-right
     (screen_width // 2, screen_height // 2),      # Center
-    (screen_width // 2, screen_height // 8),       # Top-center
-    (screen_width // 2, 7 * screen_height // 8),   # Bottom-center
+    (screen_width // 2, screen_height * 0.05),       # Top-center
+    (screen_width // 2,  screen_height * 0.95),   # Bottom-center
     (screen_width // 8, screen_height // 2),       # Left-center
     (7 * screen_width // 8, screen_height // 2)    # Right-center
 ]
