@@ -237,9 +237,6 @@ def train_model_from_csv(filename="calibration_data.csv"):
     # # Train models
     # x_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
     # y_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
-
-    # x_model.fit(X, y_x)
-    # y_model.fit(X, y_y)
     x_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
     y_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
 
