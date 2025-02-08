@@ -16,10 +16,8 @@ from python_server import start_gaze_server, read_gaze_data  # Import gaze serve
 from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEventLoop
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
-# from sklearn.linear_model import LinearRegression
 # from sklearn.ensemble import RandomForestRegressor
 from lightgbm import LGBMRegressor
-# from sklearn.model_selection import train_test_split, KFold
 import pyautogui  # For capturing screenshots
 import argparse
 
@@ -31,12 +29,12 @@ parser.add_argument(
     default=10,  # Default to 10 seconds
     help="Set the duration of the program in seconds."
 )
-# parser.add_argument(
-#     "--calibration_enabled",
-#     type=lambda x: str(x).lower() in ['true', '1', 'yes'],
-#     default=False,
-#     help="Enable calibration before starting (true/false). Default is False."
-# )
+parser.add_argument(
+    "--distraction_tolerance",
+    type=int,
+    default=5,  # Default to 10 seconds
+    help="Set the duration in SECONDS for how long user can get distracted before providing feedback."
+)
 
 # Parse arguments
 args = parser.parse_args()
@@ -44,12 +42,9 @@ args = parser.parse_args()
 # Use parsed values
 program_duration = args.program_duration
 calibration_enabled = False
+distraction_tolerance = args.distraction_tolerance # seconds
 
 print(f"Program Duration: {program_duration} seconds")
-# print(f"Calibration Enabled: {calibration_enabled}")
-
-
-# program_duration = 10 # seconds
     
 session_id = str(uuid.uuid4())[:8] # Generate unique session ID 
 
@@ -59,6 +54,7 @@ screen = app.primaryScreen()
 screen_size = screen.size()
 screen_width = screen_size.width()
 screen_height = screen_size.height()
+screen_midpoint = screen_width // 2
 
 # Create an overlay window for the red circle
 class Overlay(QWidget):
@@ -421,9 +417,12 @@ BUFFER_SIZE = 30  # Write every 30 frames (about once per second)
 
 last_screenshot_time = time.time() # init screenshot time
 
+distracted_counter = 0
+
 # MAIN LOOP AFTER CALIBRATION
 def update_gaze():
     global last_screenshot_time
+    global distracted_counter
 
     gaze_data = read_gaze_data(client_socket)
     # print("Gaze Data:", gaze_data)
@@ -449,8 +448,18 @@ def update_gaze():
 
         x, y = map_gaze_to_screen(full_gaze_data)
 
-        # SAVE TO CSV
+        # 
+        if x < screen_midpoint:
+            distracted_counter += 1
+        else:
+            distracted_counter = 0
 
+        if distracted_counter >= distraction_tolerance * 33:
+            print("DISTRACTED")
+            distracted_counter = 0
+
+
+        # SAVE TO CSV
         # Get timestamp in seconds
         timestamp = time.time()
 
@@ -496,7 +505,6 @@ take_screenshot()
 # read session data csv
 df_output = pd.read_csv(GAZE_LOG_FILE)
 # Calculate percentage of points on the left side of the screen vs right
-screen_midpoint = screen_width // 2
 left_side_count = int((df_output['screen_x'] < screen_midpoint).sum())  # Convert to Python int
 right_side_count = int((df_output['screen_x'] >= screen_midpoint).sum())  # Convert to Python int
 
