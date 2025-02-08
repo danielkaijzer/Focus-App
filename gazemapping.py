@@ -20,6 +20,7 @@ from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
 # from sklearn.ensemble import RandomForestRegressor
 from lightgbm import LGBMRegressor
 # from sklearn.model_selection import train_test_split, KFold
+import pyautogui  # For capturing screenshots
     
 session_id = str(uuid.uuid4())[:8] # Generate unique session ID 
 
@@ -283,9 +284,66 @@ def map_gaze_to_screen(gaze_data):
 timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 GAZE_LOG_FILE = f"gaze_tracking_{timestamp_str}.csv"
 
+# Define how often to take screenshots
+SCREENSHOT_INTERVAL = 10 # seconds
+screenshot_data = []  # Store screenshot metadata
 
-gaze_buffer = []
-BUFFER_SIZE = 30  # Write every 30 frames (about once per second)
+# Directory to save screenshots
+screenshot_dir = "screenshots"
+os.makedirs(screenshot_dir, exist_ok=True)
+
+# Define filename for screenshot metadata
+SCREENSHOT_METADATA_FILE = f"screenshot_metadata_{timestamp_str}.csv"
+
+# Screenshot metadata buffer
+screenshot_buffer = []
+SCREENSHOT_BUFFER_SIZE = 5 
+
+
+
+# Function to save screenshot metadata in batches
+def save_screenshot_data():
+    global screenshot_buffer
+    if not screenshot_buffer:
+        return  # Don't write if buffer is empty
+
+    file_exists = os.path.isfile(SCREENSHOT_METADATA_FILE)
+
+    with open(SCREENSHOT_METADATA_FILE, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        
+        # Write header if file is new
+        if not file_exists:
+            writer.writerow(["timestamp", "screenshot_path"])
+
+        # Write buffered screenshot metadata
+        writer.writerows(screenshot_buffer)
+    
+    print(f"✅ {len(screenshot_buffer)} screenshot metadata records saved to {SCREENSHOT_METADATA_FILE}")
+    screenshot_buffer.clear()  # Clear buffer after writing
+
+
+# Function to take a screenshot and store metadata in buffer
+def take_screenshot():
+    global last_screenshot_time
+
+    timestamp = time.time()  # Get precise timestamp
+    dt_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")  # Human-readable
+    filename = f"screenshot_{dt_string}.png"
+    filepath = os.path.join(screenshot_dir, filename)
+
+    # Capture screenshot
+    screenshot = pyautogui.screenshot()
+    screenshot.save(filepath)
+
+    # Store metadata in buffer
+    screenshot_buffer.append([timestamp, filepath])
+    print(f"📸 Screenshot saved: {filepath}")
+
+    # Save to CSV when buffer reaches its limit
+    if len(screenshot_buffer) >= SCREENSHOT_BUFFER_SIZE:
+        save_screenshot_data()
+
 
 # Function to save gaze data to CSV
 # def save_gaze_data(timestamp, screen_x, screen_y, session_id):
@@ -313,9 +371,15 @@ def save_gaze_data():
 # For moving averaging (SMOOTHING)
 N = 25  # Number of frames to average over (HIGHER IS SMOOTHER)
 gaze_positions = collections.deque(maxlen=N)
+gaze_buffer = []
+BUFFER_SIZE = 30  # Write every 30 frames (about once per second)
 
+last_screenshot_time = time.time() # init screenshot time
 
+# MAIN LOOP AFTER CALIBRATION
 def update_gaze():
+    global last_screenshot_time
+
     gaze_data = read_gaze_data(client_socket)
     print("Gaze Data:", gaze_data)
 
@@ -352,7 +416,12 @@ def update_gaze():
             save_gaze_data()  # Write batch to CSV
         # save_gaze_data(timestamp, x, y, session_id)
 
-        print(f"Screen X: {x}, Screen Y: {y}, Timestamp: {timestamp}")
+        # Capture screenshots every SCREENSHOT_INTERVAL seconds
+        if timestamp - last_screenshot_time >= SCREENSHOT_INTERVAL:
+            take_screenshot()
+            last_screenshot_time = timestamp
+
+        # print(f"Screen X: {x}, Screen Y: {y}, Timestamp: {timestamp}")
 
         gaze_positions.append((x, y))
 
@@ -373,6 +442,10 @@ overlay.show()
 
 # Run the PyQt event loop
 exit_code = app.exec()
+
+# Cleanup when exiting
+save_screenshot_data()  # Ensure any remaining screenshot metadata is written
+save_gaze_data()
 
 # Cleanup when exiting
 client_socket.close()
