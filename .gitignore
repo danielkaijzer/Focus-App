@@ -1,6 +1,8 @@
 external_libs/GazeTracking/
 external_libs/openFace/
 
+Screenshots/
+
 .ipynb_checkpoints/
 .virtual_documents/
 
@@ -13,6 +15,7 @@ gaze_heatmap.png
 # Ignore dynamically named CSV files
 gaze_tracking_*.csv
 screenshot_metadata_*.csv
+session_analysis_*.json
 
 
 **/.DS_Store

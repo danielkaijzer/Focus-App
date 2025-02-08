@@ -23,10 +23,33 @@ from lightgbm import LGBMRegressor
 import pyautogui  # For capturing screenshots
 import argparse
 
+# Set up argument parser
+parser = argparse.ArgumentParser(description="Run gaze mapping with optional settings.")
+parser.add_argument(
+    "--program_duration",
+    type=int,
+    default=10,  # Default to 10 seconds
+    help="Set the duration of the program in seconds."
+)
+# parser.add_argument(
+#     "--calibration_enabled",
+#     type=lambda x: str(x).lower() in ['true', '1', 'yes'],
+#     default=False,
+#     help="Enable calibration before starting (true/false). Default is False."
+# )
+
+# Parse arguments
+args = parser.parse_args()
+
+# Use parsed values
+program_duration = args.program_duration
+calibration_enabled = False
+
+print(f"Program Duration: {program_duration} seconds")
+# print(f"Calibration Enabled: {calibration_enabled}")
 
 
-
-program_duration = 30 # seconds
+# program_duration = 10 # seconds
     
 session_id = str(uuid.uuid4())[:8] # Generate unique session ID 
 
@@ -99,8 +122,7 @@ class Overlay(QWidget):
 overlay = Overlay()
 client_socket, process = start_gaze_server()
 
-calibration_enabled = False
-dynamic_screenshots_enabled = False
+# calibration_enabled = False
 ONESHOT = True # if we take one screenshot at end, make true
 
 # 1. Calibration Points:
@@ -404,7 +426,7 @@ def update_gaze():
     global last_screenshot_time
 
     gaze_data = read_gaze_data(client_socket)
-    print("Gaze Data:", gaze_data)
+    # print("Gaze Data:", gaze_data)
 
     if gaze_data and all(key in gaze_data for key in ['yaw', 'pitch', 'gaze_left', 'gaze_right', 'head_pose']):
         # Prepare full feature dictionary
@@ -440,7 +462,7 @@ def update_gaze():
         # save_gaze_data(timestamp, x, y, session_id)
 
         # Capture screenshots every SCREENSHOT_INTERVAL seconds
-        if dynamic_screenshots_enabled and timestamp - last_screenshot_time >= SCREENSHOT_INTERVAL:
+        if not ONESHOT and timestamp - last_screenshot_time >= SCREENSHOT_INTERVAL:
             take_screenshot()
             last_screenshot_time = timestamp
 
@@ -478,7 +500,7 @@ screen_midpoint = screen_width // 2
 left_side_count = int((df_output['screen_x'] < screen_midpoint).sum())  # Convert to Python int
 right_side_count = int((df_output['screen_x'] >= screen_midpoint).sum())  # Convert to Python int
 
-total_time = int(df_output["timestamp"].max() - df_output["timestamp"].min())  # Ensure it's a Python int
+total_time = int(len(df_output))  # Ensure it's a Python int
 left_ratio = float(left_side_count / total_time) if total_time > 0 else 0.0
 right_ratio = float(right_side_count / total_time) if total_time > 0 else 0.0
 
