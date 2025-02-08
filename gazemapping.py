@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import time
+from datetime import datetime
 import csv
 import collections
 import cv2
@@ -15,9 +16,10 @@ from python_server import start_gaze_server, read_gaze_data  # Import gaze serve
 from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEventLoop
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split, KFold
+# from sklearn.linear_model import LinearRegression
+# from sklearn.ensemble import RandomForestRegressor
+from lightgbm import LGBMRegressor
+# from sklearn.model_selection import train_test_split, KFold
     
 session_id = str(uuid.uuid4())[:8] # Generate unique session ID 
 
@@ -232,9 +234,15 @@ def train_model_from_csv(filename="calibration_data.csv"):
     y_x = df["screen_x"]
     y_y = df["screen_y"]
 
-    # Train models
-    x_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
-    y_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+    # # Train models
+    # x_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+    # y_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+
+    # x_model.fit(X, y_x)
+    # y_model.fit(X, y_y)
+    x_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
+    y_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
+
 
     x_model.fit(X, y_x)
     y_model.fit(X, y_y)
@@ -273,9 +281,41 @@ def map_gaze_to_screen(gaze_data):
     return screen_x, screen_y
 
 
+
+# Define filename for gaze tracking data
+timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+GAZE_LOG_FILE = f"gaze_tracking_{timestamp_str}.csv"
+
+
+gaze_buffer = []
+BUFFER_SIZE = 30  # Write every 30 frames (about once per second)
+
+# Function to save gaze data to CSV
+# def save_gaze_data(timestamp, screen_x, screen_y, session_id):
+def save_gaze_data():
+    global gaze_buffer
+    if not gaze_buffer:
+        return # don't write if buffer empty
+
+    file_exists = os.path.isfile(GAZE_LOG_FILE)
+    
+    # Open CSV file in append mode
+    with open(GAZE_LOG_FILE, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        
+        # Write header if file is new
+        if not file_exists:
+            writer.writerow(["session_id", "timestamp", "screen_x", "screen_y"])
+
+        # Write gaze data rows
+        writer.writerows(gaze_buffer)
+        # writer.writerow([session_id, timestamp, screen_x, screen_y])
+    print(f"✅ {len(gaze_buffer)} gaze records saved to {GAZE_LOG_FILE}")
+    gaze_buffer.clear()  # Clear buffer after writing
+
+# For moving averaging (SMOOTHING)
 N = 25  # Number of frames to average over (HIGHER IS SMOOTHER)
 gaze_positions = collections.deque(maxlen=N)
-
 
 
 def update_gaze():
@@ -302,7 +342,20 @@ def update_gaze():
         }
 
         x, y = map_gaze_to_screen(full_gaze_data)
-        print("Screen X:", x, "Screen Y:", y)
+
+        # SAVE TO CSV
+
+        # Get timestamp in seconds
+        timestamp = time.time()
+
+        gaze_buffer.append([session_id, timestamp, x, y])
+
+        # Write to CSV every BUFFER_SIZE frames
+        if len(gaze_buffer) >= BUFFER_SIZE:
+            save_gaze_data()  # Write batch to CSV
+        # save_gaze_data(timestamp, x, y, session_id)
+
+        print(f"Screen X: {x}, Screen Y: {y}, Timestamp: {timestamp}")
 
         gaze_positions.append((x, y))
 
