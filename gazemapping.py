@@ -485,7 +485,7 @@ right_ratio = float(right_side_count / total_time) if total_time > 0 else 0.0
 # Prepare JSON output (all values converted to Python-native types)
 session_analysis = {
     "session_id": str(session_id),  # Ensure string type
-    "total_time": program_duration,
+    "total_time": int(program_duration),
     "left_ratio": left_ratio,
     "right_ratio": right_ratio,
     "left_count": left_side_count,

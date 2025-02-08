@@ -1,6 +1,9 @@
 external_libs/GazeTracking/
 external_libs/openFace/
 
+.ipynb_checkpoints/
+.virtual_documents/
+
 # Ignore specific files
 Post-Session_Analysis.ipynb
 gaze_heatmap_overlay.png
