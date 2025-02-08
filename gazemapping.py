@@ -93,6 +93,8 @@ class Overlay(QWidget):
 overlay = Overlay()
 client_socket, process = start_gaze_server()
 
+calibration_enabled = False
+
 # 1. Calibration Points:
 CALIBRATION_POINTS = [
     (screen_width * 0.05, screen_height * 0.05),       # Very near top-left
@@ -157,6 +159,18 @@ def calibrate_gaze():
         while time.time() - start_time < 4:
             gaze_data = read_gaze_data(client_socket)
             if gaze_data and all(key in gaze_data for key in ['yaw', 'pitch', 'gaze_left', 'gaze_right', 'head_pose']):
+                # Extract values
+                yaw = gaze_data['yaw']
+                pitch = gaze_data['pitch']
+                gaze_left = gaze_data['gaze_left']
+                gaze_right = gaze_data['gaze_right']
+                head_pose = gaze_data['head_pose']
+
+                # Check if any critical values are exactly 0.0 and abort
+                if yaw == 0.0 or pitch == 0.0 or head_pose['yaw'] == 0.0 or head_pose['pitch'] == 0.0:
+                    print(f"Aborting: Invalid gaze data detected (zero values): {gaze_data}")
+                    return 
+                
                 # Collect more comprehensive data
                 gaze_data_points.append({
                     'yaw': gaze_data['yaw'],
@@ -212,8 +226,9 @@ while True:
 
 
 # 4. Call Calibration Function:
-calibration_data = calibrate_gaze() # Run before main loop
-print("Calibration Complete:", calibration_data)
+if calibration_enabled:
+    calibration_data = calibrate_gaze() # Run before main loop
+    print("Calibration Complete:", calibration_data)
 
 
 def train_model_from_csv(filename="calibration_data.csv"):
