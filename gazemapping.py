@@ -10,6 +10,7 @@ import collections
 import cv2
 import numpy as np
 import pandas as pd
+import uuid
 from python_server import start_gaze_server, read_gaze_data  # Import gaze server
 from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEventLoop
 from PyQt6.QtWidgets import QApplication, QWidget
@@ -18,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, KFold
     
+session_id = str(uuid.uuid4())[:8] # Generate unique session ID 
 
 # Initialize PyQt Application
 app = QApplication(sys.argv)
@@ -104,6 +106,34 @@ CALIBRATION_POINTS = [
 # 2. Calibration Data Storage:
 calibration_data = []  # List to store gaze data and x,y screen coordinates
 
+def save_calibration_data(calibration_data, filename="calibration_data.csv"):
+    file_exists = os.path.isfile(filename)
+    
+    # Define column order
+    columns = [
+        "session_id", "yaw", "pitch", 
+        "gaze_left_x", "gaze_left_y", "gaze_left_z",
+        "gaze_right_x", "gaze_right_y", "gaze_right_z",
+        "head_tx", "head_ty", "head_tz",
+        "head_roll", "head_pitch", "head_yaw",
+        "screen_x", "screen_y"
+    ]
+
+    # Ensure calibration_data is always a list
+    if isinstance(calibration_data, dict):
+        calibration_data = [calibration_data]  # Convert single dictionary to a list
+
+    for data in calibration_data:
+        data["session_id"] = session_id  # Assign session ID to each row
+
+    # Convert to DataFrame
+    df = pd.DataFrame(calibration_data, columns=columns)
+
+    # Append to CSV (create if it doesn't exist)
+    df.to_csv(filename, mode='a', index=False, header=not file_exists)
+    print(f"✅ Calibration data saved to {filename}")
+
+
 # 3. Calibration Function:
 def calibrate_gaze():
     # global calibration_data
@@ -150,11 +180,9 @@ def calibrate_gaze():
             }
             avg_data['screen_x'] = int(x)
             avg_data['screen_y'] = int(y)
-
-            # save avg data for CSV !!!!!
-            
             
             calibration_data.append(avg_data)
+            save_calibration_data(avg_data)
             print(f"Calibration data added for point: ({x}, {y})")
         else:
             print("No gaze data received for this point.")
@@ -184,81 +212,68 @@ while True:
 calibration_data = calibrate_gaze() # Run before main loop
 print("Calibration Complete:", calibration_data)
 
+
+def train_model_from_csv(filename="calibration_data.csv"):
+    # Load data
+    if not os.path.isfile(filename):
+        print("No calibration data available.")
+        return None, None
+
+    df = pd.read_csv(filename)
+
+    # Define feature columns
+    features = ["yaw", "pitch", 
+                "gaze_left_x", "gaze_left_y", "gaze_left_z",
+                "gaze_right_x", "gaze_right_y", "gaze_right_z",
+                "head_tx", "head_ty", "head_tz",
+                "head_roll", "head_pitch", "head_yaw"]
+
+    X = df[features]
+    y_x = df["screen_x"]
+    y_y = df["screen_y"]
+
+    # Train models
+    x_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+    y_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+
+    x_model.fit(X, y_x)
+    y_model.fit(X, y_y)
+
+    print("✅ Models trained on calibration data.")
+    return x_model, y_model
+
+x_model, y_model = train_model_from_csv()
+
 def map_gaze_to_screen(gaze_data):
-    if not calibration_data:
-        print("No calibration data available. Using default mapping.")
+    if not x_model or not y_model:
+        print("No trained model available, using default mapping.")
         SCALING_FACTOR = 400
-        screen_x = int(screen_width / 2 + gaze_data['yaw'] * SCALING_FACTOR)
-        screen_y = int(screen_height / 2 - gaze_data['pitch'] * SCALING_FACTOR)
+        screen_x = int(screen_width / 2 + gaze_data["yaw"] * SCALING_FACTOR)
+        screen_y = int(screen_height / 2 - gaze_data["pitch"] * SCALING_FACTOR)
         return screen_x, screen_y
 
-    # Prepare feature matrix
-    features = ['yaw', 'pitch', 
-                'gaze_left_x', 'gaze_left_y', 'gaze_left_z', 
-                'gaze_right_x', 'gaze_right_y', 'gaze_right_z', 
-                'head_tx', 'head_ty', 'head_tz', 
-                'head_roll', 'head_pitch', 'head_yaw']
+    # Prepare input features
+    features = ["yaw", "pitch", 
+                "gaze_left_x", "gaze_left_y", "gaze_left_z",
+                "gaze_right_x", "gaze_right_y", "gaze_right_z",
+                "head_tx", "head_ty", "head_tz",
+                "head_roll", "head_pitch", "head_yaw"]
 
-    # Extract training data
-    X = [[point[f] for f in features] for point in calibration_data]
-    y_x = [point['screen_x'] for point in calibration_data]
-    y_y = [point['screen_y'] for point in calibration_data]
-
-    # TRAIN MODEL ON CALIBRATION DATA
-
-    # # Extract feature matrix (X) and target values (y_x, y_y)
-    # X = np.array([[point[f] for f in features] for point in calibration_data])
-    # y_x = np.array([point['screen_x'] for point in calibration_data])
-    # y_y = np.array([point['screen_y'] for point in calibration_data])
-
-    # X_train, X_test, y_x_train, y_x_test, y_y_train, y_y_test = train_test_split(
-    #     X, y_x, y_y, test_size=0.2, random_state=42
-    # )
-
-    # # Set up cross-validation
-    # n_splits = min(5, len(X_train))  # Ensure we don't exceed the number of samples
-    # kf = KFold(n_splits=n_splits, shuffle=True, random_state=42) if n_splits > 1 else None
-
-    # # Train a Random Forest Regressor
-    # x_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
-    # y_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
-
-    # for train_index, val_index in kf.split(X_train):
-    #     X_train_fold, X_val_fold = X_train[train_index], X_train[val_index]
-    #     y_x_train_fold, y_x_val_fold = y_x_train[train_index], y_x_train[val_index]
-    #     y_y_train_fold, y_y_val_fold = y_y_train[train_index], y_y_train[val_index]
-
-    #     x_model.fit(X_train_fold, y_x_train_fold)
-    #     y_model.fit(X_train_fold, y_y_train_fold)
-
-    # # Prepare the current gaze data as a feature vector
-    # current_features = np.array([gaze_data[f] for f in features]).reshape(1, -1)
-
-    # # Predict screen coordinates
-    # screen_x = int(x_model.predict(current_features)[0])  # No extra list wrapping
-    # screen_y = int(y_model.predict(current_features)[0])
-    
-
-    # Fit models 
-    x_model = LinearRegression().fit(X, y_x)
-    y_model = LinearRegression().fit(X, y_y)
-
-
-
-    # Prepare current gaze data as feature vector
-    current_features = [gaze_data[f] for f in features]
+    # Convert gaze data into a DataFrame so feature names are preserved
+    current_features_df = pd.DataFrame([gaze_data], columns=features)
 
     # Predict screen coordinates
-    screen_x = int(x_model.predict([current_features])[0])
-    screen_y = int(y_model.predict([current_features])[0])
+    screen_x = int(x_model.predict(current_features_df)[0])
+    screen_y = int(y_model.predict(current_features_df)[0])
 
-    # Clamping
+    # Clamping to screen bounds
     screen_x = max(0, min(screen_x, screen_width - 1))
     screen_y = max(0, min(screen_y, screen_height - 1))
 
     return screen_x, screen_y
 
-N = 13  # Number of frames to average over (HIGHER IS SMOOTHER)
+
+N = 25  # Number of frames to average over (HIGHER IS SMOOTHER)
 gaze_positions = collections.deque(maxlen=N)
 
 
