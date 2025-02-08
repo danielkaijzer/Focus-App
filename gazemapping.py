@@ -21,6 +21,12 @@ from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
 from lightgbm import LGBMRegressor
 # from sklearn.model_selection import train_test_split, KFold
 import pyautogui  # For capturing screenshots
+import argparse
+
+
+
+
+program_duration = 30 # seconds
     
 session_id = str(uuid.uuid4())[:8] # Generate unique session ID 
 
@@ -94,6 +100,8 @@ overlay = Overlay()
 client_socket, process = start_gaze_server()
 
 calibration_enabled = False
+dynamic_screenshots_enabled = False
+ONESHOT = True # if we take one screenshot at end, make true
 
 # 1. Calibration Points:
 CALIBRATION_POINTS = [
@@ -356,7 +364,7 @@ def take_screenshot():
     print(f"📸 Screenshot saved: {filepath}")
 
     # Save to CSV when buffer reaches its limit
-    if len(screenshot_buffer) >= SCREENSHOT_BUFFER_SIZE:
+    if len(screenshot_buffer) >= SCREENSHOT_BUFFER_SIZE or ONESHOT:
         save_screenshot_data()
 
 
@@ -432,7 +440,7 @@ def update_gaze():
         # save_gaze_data(timestamp, x, y, session_id)
 
         # Capture screenshots every SCREENSHOT_INTERVAL seconds
-        if timestamp - last_screenshot_time >= SCREENSHOT_INTERVAL:
+        if dynamic_screenshots_enabled and timestamp - last_screenshot_time >= SCREENSHOT_INTERVAL:
             take_screenshot()
             last_screenshot_time = timestamp
 
@@ -455,8 +463,42 @@ timer.start(33)
 
 overlay.show()
 
+QTimer.singleShot(program_duration * 1000, app.quit) # HOW LONG THE PROGRAM RUNS
+
 # Run the PyQt event loop
 exit_code = app.exec()
+
+take_screenshot()
+
+# Post-session analysis
+# read session data csv
+df_output = pd.read_csv(GAZE_LOG_FILE)
+# Calculate percentage of points on the left side of the screen vs right
+screen_midpoint = screen_width // 2
+left_side_count = int((df_output['screen_x'] < screen_midpoint).sum())  # Convert to Python int
+right_side_count = int((df_output['screen_x'] >= screen_midpoint).sum())  # Convert to Python int
+
+total_time = int(df_output["timestamp"].max() - df_output["timestamp"].min())  # Ensure it's a Python int
+left_ratio = float(left_side_count / total_time) if total_time > 0 else 0.0
+right_ratio = float(right_side_count / total_time) if total_time > 0 else 0.0
+
+# Prepare JSON output (all values converted to Python-native types)
+session_analysis = {
+    "session_id": str(session_id),  # Ensure string type
+    "total_time": program_duration,
+    "left_ratio": left_ratio,
+    "right_ratio": right_ratio,
+    "left_count": left_side_count,
+    "right_count": right_side_count
+}
+
+# Write to a JSON file
+json_filename = f"session_analysis_{session_id}.json"
+with open(json_filename, "w") as json_file:
+    json.dump(session_analysis, json_file, indent=4)
+
+print(f"📄 Session analysis saved to {json_filename}")
+
 
 # Cleanup when exiting
 save_screenshot_data()  # Ensure any remaining screenshot metadata is written
