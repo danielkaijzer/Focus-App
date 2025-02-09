@@ -44,7 +44,6 @@ function createWindow() {
   });
   // Load your HTML file (ensure it's in your project directory)
   require("@electron/remote/main").enable(win.webContents);
-  win.webContents.openDevTools()
   win.loadFile('index.html');
   globalShortcut.register("Control+Shift+J", async () => {
     console.log("Ctrl+Shift+J pressed");
