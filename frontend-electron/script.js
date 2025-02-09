@@ -12,6 +12,7 @@ function loadJsonSync(filename) {
     return null;
   }
 }
+
 focusTimes = loadJsonSync("./data.json");
 
 var chartOptions = {
@@ -93,79 +94,27 @@ var lineChart = new ApexCharts(document.querySelector('#line-chart'), chartOptio
 lineChart.render();
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   
+
   
       
     
     
-  
 
 
   
-        
+    
+      
     
   
 
-
     
+  
     
   
   
-  
 
 
     
 
+  

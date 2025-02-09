@@ -1,3 +1,3 @@
-// document.addEventListener("DOMContentLoaded", () => {
-//     document.body.style.userSelect = "none";
-// });
+document.addEventListener("DOMContentLoaded", () => {
+  document.body.style.userSelect = "none";
+});

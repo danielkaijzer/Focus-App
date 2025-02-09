@@ -145,6 +145,12 @@ export class GeminiAgent {
     this.emit('text_sent', text);
   }
 
+  async sendTextForContext(context) {
+    console.log('sendTextForContext');
+    await this.client.sendText(context, false);
+    this.emit('text_sent', context);
+  }
+
   async sendTextAndImage(text, image) {
     console.log('sendTextImage');
     await this.client.sendText(text)

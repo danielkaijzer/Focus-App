@@ -2,8 +2,12 @@ import elements from './elements.js';
 import settingsManager from '../settings/settings-manager.js';
 const fs = require('fs');
 
+const geminiTaskAwarenessPrompt = `Format users prompt so that it is in this form: User is working on a very important Hackathon`
+const geminiDistractedPrompt = `User is distracted by something on left side of screen. Tell user in this form what they are being distracted by and remind them of their task: "Hey you are getting distracted by X on the left side of the screen. I saw you looking. Don't forget you wanted to work on Y". Please replace X with specific details of whatever is on the left side of the screen and replace Y with the task user provided earlier. Remember, the form that I gave you is just an example. Do a different variation each time you tried reminding the user`
+
 // Persistent variable that holds the latest timestamp from distracted.json
 let latestTimestamp = null;
+let numberOfDistracted = 0;
 
 /**
  * Updates UI to show disconnect button and hide connect button
@@ -166,10 +170,13 @@ export function setupEventListeners(agent) {
 
       // Check if latestTimestamp is null (first run) or if the new timestamp is newer
       if (latestTimestamp === null || fileTimestamp > latestTimestamp) {
+        numberOfDistracted++;
         latestTimestamp = fileTimestamp;
+        const geminiDistractedPromptAggresive = geminiDistractedPrompt + `This is the ${numberOfDistracted} time the user is getting distracted. Be more aggresive if the number is bigger. AND YOU DON'T NEED TO SAY YOU UNDERSTAND, I ALREADY KNOW. JUST NOTIFY THE USER IMMEDIATELY`
         console.log("Updated latestTimestamp to:", latestTimestamp);
         await ensureAgentReady(agent);
-        await agent.sendText("The user is distracted because of the application on their left part of the screen! Please check in on them while describing what kind of application is making them distracted.");
+        await agent.sendTextForContext(geminiTaskAwarenessPrompt);
+        await agent.sendText(geminiDistractedPromptAggresive);
       } else {
         console.log("latestTimestamp remains unchanged:", latestTimestamp);
       }

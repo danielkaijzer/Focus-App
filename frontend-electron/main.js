@@ -102,7 +102,7 @@ app.on('activate', () => {
 setInterval(async () => {
   try {
     // Launch Python script
-    const pythonProcess = spawn("python", ["../Focus-App/gazemapping.py"]);
+    const pythonProcess = spawn("python", ["../../../testing/Focus-App/gazemapping.py"]);
 
     pythonProcess.stdout.on("data", (data) => {
       console.log(`Python Output: ${data}`);

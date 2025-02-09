@@ -32,8 +32,10 @@
           <h1>General Information</h1>
           <button>Upgrade</button>
         </header>
-        <div class="dashboard">
-          <div class="card gradient-bg settings"></div>
+        <div class="dashboard" id="dashboard">
+          <div class="card gradient-bg settings">
+            <canvas id="gaugeChart"></canvas>
+            <script src="renderer.js"></script> </div>
           <div class="card gradient-bg">
             
             <div class = "chartCard">
@@ -41,6 +43,10 @@
                 <div id="line-chart"></div>
               </div>
             </div>
+
+            <button id="viewAll" onclick="toggleCarousel()">
+                View All
+            </button>
 
 
           </div>
@@ -63,6 +69,13 @@
             </div>
           </div>
         </div>
+       <div class="carousel" id="carousel">
+            <button onclick="toggleCarousel()">Back</button>
+            <div class="carousel-container">
+              <div class="carousel-slide" id="carousel-slide">
+                <div class="image-placeholder" style="background-color: #000000; background-image: url(./assets/gaze_heatmap_overlay.png);" ></div>
+              </div>
+            </div>
         </div>
         <!-- TODO: This is here to make the integration works for now. -->
         <div style="display:none;">
@@ -93,6 +106,94 @@
       <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
       <script src="./script.js"></script>
       <script type="module" src="./js/script.js"></script>
+      <script>
+          // Require Node.js modules (works if nodeIntegration is enabled)
+          const path = require('path');
+
+          // Define the path to your screenshots directory (adjust if necessary)
+          const screenshotsDir = path.join(__dirname, 'screenshots');
+
+          // Read the directory
+          fs.readdir(screenshotsDir, (err, files) => {
+            if (err) {
+              console.error("Error reading the screenshots directory:", err);
+              return;
+            }
+
+            // Filter files to include only common image extensions
+            const imageFiles = files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file));
+
+            // Get the container where image elements will be inserted
+            const carouselSlide = document.getElementById('carousel-slide');
+
+            // Loop through each image file and create a new div for it
+            imageFiles.forEach(file => {
+              const fullPath = path.join(screenshotsDir, file);
+              
+              // Create the image placeholder div
+              const imageDiv = document.createElement('div');
+              imageDiv.classList.add('image-placeholder');
+
+              // Set the background image.
+              // Use the file:// protocol to reference local files.
+              imageDiv.style.backgroundImage = `url("file://${fullPath}")`;
+
+              // Append the new div to the carousel slide container
+              carouselSlide.appendChild(imageDiv);
+            });
+          });
+
+
+
+
+          let dashboard = document.getElementById("dashboard");
+          let carousel = document.getElementById("carousel");
+          function toggleCarousel(){
+            console.log("toggled")
+            console.log(dashboard.style.display.toString());
+            if(dashboard.style.display == "grid"){
+              carousel.style.display = "block";
+              dashboard.style.display = "none";
+            } else{
+              carousel.style.display = "none";
+              dashboard.style.display = "grid";
+            }
+          }
+
+          
+                    
+          const carouselSlide = document.querySelector('.carousel-slide');
+          let images = document.querySelectorAll('.image-placeholder');
+          console.log("images length: "+ images.length );
+          let counter = 0;
+
+
+          let size = images[0].clientWidth;
+          carousel.style.display="none";
+
+          carouselSlide.style.transform = 'translateX(' + (-size * counter) + 'px)';
+          console.log("here1")
+          document.addEventListener('keydown', (event) => {
+            images = document.querySelectorAll('.image-placeholder');
+            size = images[0].clientWidth;
+            if (event.key === 'ArrowLeft') {
+              console.log("LEFT: " + counter);
+              counter--;
+              if (counter < 0) {
+                counter = images.length - 1;
+              }
+              carouselSlide.style.transform = 'translateX(' + (-size * counter) + 'px)';
+            } else if (event.key === 'ArrowRight') {
+              console.log("RIGHT: " + counter);
+              counter++;
+              if (counter >= images.length) {
+                counter = 0;
+              }
+              carouselSlide.style.transform = 'translateX(' + (-size * counter) + 'px)';
+            }
+          });
+          
+        </script>
 
     </body>
     </html>

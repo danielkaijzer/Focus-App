@@ -1,6 +1,17 @@
+@font-face {
+  font-family: "San Francisco";
+  font-weight: 400;
+  src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff");
+}
+
+@font-face {
+  font-family: "San Francisco Bold";
+  font-weight: 800;
+  src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff");
+}
+
 body {
       margin: 0;
-      font-family: Arial, sans-serif;
       display: flex;
       height: 100vh;
       background-color: #1c1c1e;
@@ -178,3 +189,47 @@ body {
     .apexcharts-tooltip-active  {
       color: #1c1c1e;
     }
+
+    .progress{
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .progress p{
+      font-size: 16px;
+      text-decoration: underline;
+    
+    }
+
+    *{
+      font-family: "San Francisco";
+
+    }
+
+    .carousel{
+      display: none;
+    }
+
+    #viewAll{
+      cursor: pointer;
+    }
+
+    .carousel-container {
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .carousel-slide {
+      display: flex;
+      transition: transform 0.3s ease-in-out;
+    }
+    
+    .image-placeholder {
+      width: 100%;
+      flex-shrink: 0;
+      height: 0;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      background-color: #ccc;
+      background-size: cover;
+    }
+    
