@@ -1,83 +1,105 @@
-<!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Focal</title>
-      <link rel="stylesheet" href="styles.css">
-    </head>
-    <body>
-      <div class="sidebar">
-        <div class="profile">
-          <img src="profile-bw.jpg" alt="Profile Picture">
-          <h2>Daniel</h2>
+  <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Focal</title>
+        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+      </head>
+      <body>
+        <div class="sidebar">
+          <div class="profile">
+            <img src="profile-bw.jpg" alt="Profile Picture">
+            <div class="gradient-text" style="font-size: 28px;">Daniel Dutchman</div>
+          </div>
+          <nav>
+            <ul>
+              <li><i class="fa-solid fa-house icon"></i> Home</li>
+              <li><i class="fa-solid fa-calendar-days icon"></i> Calendar</li>
+              <li><i class="fa-solid fa-chart-simple icon"></i> Statistics</li>
+            </ul>
+          </nav>
+          <div class="settings">
+            <ul>
+              <li><i class="fa-solid fa-gear icon"></i> Settings</li>
+              <li><i class="fa-solid fa-right-from-bracket icon"></i> Log Out</li>
+            </ul>
+          </div>
         </div>
-        <nav>
-          <ul>
-            <li><span class="icon">🏠</span> Home</li>
-            <li><span class="icon">📅</span> Calendar</li>
-            <li><span class="icon">📓</span> Journal</li>
-            <li><span class="icon">📊</span> Statistics</li>
-          </ul>
-        </nav>
-        <div class="settings">
-          <ul>
-            <li><span class="icon">⚙️</span> Settings</li>
-            <li><span class="icon">🔓</span> Log Out</li>
-          </ul>
-        </div>
-      </div>
-      <div class="main-content">
-        <header>
-          <h1>General Information</h1>
-          <button>Upgrade</button>
-        </header>
-        <div class="dashboard" id="dashboard">
-          <div class="card gradient-bg settings">
-            <canvas id="gaugeChart"></canvas>
-            <script src="renderer.js"></script> </div>
-          <div class="card gradient-bg">
-            
-            <div class = "chartCard">
-              <div class="chartCard-content">
-                <div id="line-chart"></div>
+        <div class="main-content">
+          <header>
+            <div class="gradient-text">General Information</div>
+          </header>
+
+
+          <div class="dashboard" id="dashboard">
+            <div class="card gradient-bg results">
+              <div class="title">
+                <h2>Results of the last session:</h2>
               </div>
+              <div class="pieDiv">
+                <div class="pieInfo">
+
+                  <div class="infoLine" >
+                    <div class="infoColor" style="background-color: #0f0;"></div>
+                    <p>1h 32m</p>
+                  </div>
+
+                  <div class="infoLine">
+                    <div class="infoColor" style="background-color: rgb(118, 118, 118);"></div>
+                    <p>31m</p>
+                  </div>
+
+                </div>
+                <div class="cardPieContainer">
+                  <div class="cardPie">
+                    <div class ="rating">
+                      <h2> <span class="counter" data-target="75">75</span> <sup>%</sup> <br> Focused </h2>
+                      <div class="block"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
-            <button id="viewAll" onclick="toggleCarousel()">
-                View All
-            </button>
+            <div class="card gradient-bg progress">
+              
+              <div class = "chartCard">
+                <div class="chartCard-content">
+                  <div id="line-chart"></div>
+                </div>
+              </div>
 
-
-          </div>
-          <div class="card gradient-bg large-card">
+              <p onclick="toggleCarousel()">See all the screenshots</p>
+            </div>
+            <div class="card gradient-bg large-card">
+              <div class="input-container">
+                <input type="text" id="messageInput" placeholder="Enter the task you want to focus on">
+              </div>
+            </div>
           
-
-            <div class="input-container">
-              <button id="cameraBtn" class="camera-btn">
-                  <span class="camera-icon">📷</span>
-              </button>
-              <button id="screenBtn" class="screen-btn">
-                  <span class="screen-icon">🖥️</span>
-              </button>
-
-              <button id="micBtn" class="mic-btn">
-                  <span class="mic-icon">🎤</span>
-              </button>
-
-              <input type="text" id="messageInput" placeholder="Enter the task you want to focus on">
-            </div>
           </div>
-        </div>
-       <div class="carousel" id="carousel">
-            <button onclick="toggleCarousel()">Back</button>
+
+          <div class="carousel" id="carousel">
             <div class="carousel-container">
-              <div class="carousel-slide" id="carousel-slide">
-                <div class="image-placeholder" style="background-color: #000000; background-image: url(./assets/gaze_heatmap_overlay.png);" ></div>
+              <div class="carousel-slide" id="carousel-slide" style="margin: auto;">
+                <div class="image-placeholder" style="background-image: url(./assets/gaze_heatmap_overlay.png); " ></div>
               </div>
             </div>
+            <div class="backDiv">
+              <div  onclick="toggleCarousel()" >
+                  <img src="./assets/arrow.png" alt="">
+              </div>
+              <!-- <button onclick="toggleCarousel()" style="border-radius: 100px; color: white;">Back</button> -->
+            </div>
+          
+          </div>
+
+          </div>
         </div>
-        <!-- TODO: This is here to make the integration works for now. -->
+         <!-- TODO: This is here to make the integration works for now. -->
         <div style="display:none;">
           <div id="chatHistory" class="chat-history"></div>
 
@@ -102,11 +124,20 @@
               <button id="sendBtn" class="send-btn">➤</button>
           </div>
         </div>
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script src="./script.js"></script>
+        <script type="module" src="./js/script.js"></script>
+        <script>
+          let rating = document.getElementsByClassName('rating')[0];
+          let block = document.getElementsByClassName('block');
+          
+          for(var i = 1; i < 100; i++){
+            rating.innerHTML += "<div class='block'></div>";
+            block[i].style.transform = "rotate("+3.6*i+"deg)";
+            block[i].style.animationDelay = `${i/40}s`;
+          }
+          
 
-      <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-      <script src="./script.js"></script>
-      <script type="module" src="./js/script.js"></script>
-      <script>
           // Require Node.js modules (works if nodeIntegration is enabled)
           const path = require('path');
 
@@ -152,7 +183,7 @@
             console.log("toggled")
             console.log(dashboard.style.display.toString());
             if(dashboard.style.display == "grid"){
-              carousel.style.display = "block";
+              carousel.style.display = "flex";
               dashboard.style.display = "none";
             } else{
               carousel.style.display = "none";
@@ -194,6 +225,5 @@
           });
           
         </script>
-
-    </body>
-    </html>
+      </body>
+      </html>

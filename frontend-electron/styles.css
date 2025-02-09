@@ -1,238 +1,434 @@
 @font-face {
-  font-family: "San Francisco";
-  font-weight: 400;
-  src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff");
+font-family: "San Francisco";
+font-weight: 400;
+src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff");
 }
 
 @font-face {
-  font-family: "San Francisco Bold";
-  font-weight: 800;
-  src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff");
+font-family: "San Francisco Bold";
+font-weight: 800;
+src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff");
 }
 
 body {
-      margin: 0;
-      display: flex;
-      height: 100vh;
-      background-color: #1c1c1e;
-      color: #fff;
-    }
+  margin: 0;
+  display: flex;
+  height: 100vh;
+  background-color: #1c1c1e;
+  color: #fff;
+}
 
-    .sidebar {
-      width: 250px;
-      background-color: #2c2c2e;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 20px;
-    }
+.sidebar {
+  width: 250px;
+  background-color: #2c2c2e;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
 
-    .profile {
-      text-align: center;
-    }
+.profile {
+  text-align: center;
+}
 
-    .profile img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      margin-bottom: 10px;
-    }
+.profile img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  background-size: cover;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 14px;
+}
 
-    nav ul, .settings ul {
-      list-style: none;
-      padding: 0;
-    }
+nav ul, .settings ul {
+  font-size: 20px;
+  font-weight: 600;
+  list-style: none;
+  padding: 0;
+}
 
-    nav ul li, .settings ul li {
-      margin: 15px 0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
+nav ul li, .settings ul li {
+  margin: 15px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
 
-    .icon {
-      margin-right: 10px;
-    }
+.icon {
+  margin-right: 10px;
+}
 
-    .main-content {
-      flex: 1;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-    }
+.main-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
 
-    header button {
-      padding: 10px 20px;
-      background-color: #007aff;
-      border: none;
-      border-radius: 5px;
-      color: #fff;
-      cursor: pointer;
-    }
+header button {
+  padding: 10px 20px;
+  background-color: #007aff;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+}
 
-    .dashboard {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: 1fr 0.8fr;
-      gap: 20px;
-    }
+.dashboard {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr 0.8fr;
+  gap: 20px;
+}
 
-    .card {
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-      background: linear-gradient(135deg, #3a3a3c, #2e2e30);
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      position: relative;
-      transition: filter 0.3s ease;
-    }
+.card {
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  background: linear-gradient(135deg, #3a3a3c, #2e2e30);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+  transition: filter 0.3s ease;
+}
 
-    .large-card {
-      grid-column: span 2;
-    }
+.large-card {
+  grid-column: span 2;
+}
 
-    .input-container {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: absolute;
-      bottom: 20px;
-      gap: 10px; /* Space between child elements /
-      padding: 10px; / Padding inside the container */
+.input-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  bottom: 20px;
+}
 
-    }
+input[type="text"] {
+  width: 80%;
+  padding: 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 5px;
+  font-size: 16px;
+  background: transparent;
+  color: #fff;
+  background-image: linear-gradient(135deg, #555, #888);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  transition: border-bottom 0.3s ease;
+}
 
-    input[type="text"] {
-      width: 80%;
-      padding: 10px;
-      border: none;
-      border-bottom: 2px solid transparent;
-      border-radius: 5px;
-      font-size: 16px;
-      background: transparent;
-      color: #fff;
-      background-image: linear-gradient(135deg, #555, #888);
-      background-size: 200% 100%;
-      background-position: 100% 0;
-      transition: border-bottom 0.3s ease;
-    }
+input[type="text"]::placeholder {
+  color: #ccc;
+}
 
-    input[type="text"]::placeholder {
-      color: #ccc;
-    }
+input[type="text"]:focus {
+  outline: none;
+  animation: light-sweep 3s infinite linear;
+}
 
-    input[type="text"]:focus {
-      outline: none;
-      animation: light-sweep 3s infinite linear;
-    }
+@keyframes light-sweep {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
 
-    @keyframes light-sweep {
-      0% {
-        background-position: 100% 0;
-      }
-      100% {
-        background-position: 0 0;
-      }
-    }
+.card:hover {
+  filter: brightness(1.2);
+}
 
-    .card:hover {
-      filter: brightness(1.2);
-    }
-
-    .card:hover ~ .card {
-      filter: brightness(0.7);
-    }
+.card:hover ~ .card {
+  filter: brightness(0.7);
+}
 
 
-    .chartCard {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-    
-    .chartCard::before,
-    .chartCard::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 10px;
-    }
-    
-    .chartCard::before {
-      z-index: 1;
-      background-color: rgba(255, 255, 255, 0);
-      transform: translate(-30px, -30px);
-    }
-    
-    .chartCard::after {
-      z-index: 2;
-      background-color: #ff000000;
-    }
-    
-    .chartCard-content {
-      position: relative; 
-      z-index: 3;
-    }
+.chartCard {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
 
-    
-    .apexcharts-tooltip-active  {
-      color: #1c1c1e;
-    }
+.chartCard::before,
+.chartCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
 
-    .progress{
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .progress p{
-      font-size: 16px;
-      text-decoration: underline;
-    
-    }
+.chartCard::before {
+  z-index: 1;
+  background-color: rgba(255, 255, 255, 0);
+  transform: translate(-30px, -30px);
+}
 
-    *{
-      font-family: "San Francisco";
+.chartCard::after {
+  z-index: 2;
+  background-color: #ff000000;
+}
 
-    }
+.chartCard-content {
+  position: relative; 
+  z-index: 3;
+}
 
-    .carousel{
-      display: none;
-    }
 
-    #viewAll{
-      cursor: pointer;
-    }
+.apexcharts-tooltip-active  {
+  color: #1c1c1e;
+}
 
-    .carousel-container {
-      width: 100%;
-      overflow: hidden;
-    }
-    
-    .carousel-slide {
-      display: flex;
-      transition: transform 0.3s ease-in-out;
-    }
-    
-    .image-placeholder {
-      width: 100%;
-      flex-shrink: 0;
-      height: 0;
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
-      background-color: #ccc;
-      background-size: cover;
-    }
-    
+.progress{
+  display: flex;
+  flex-direction: column;
+}
+
+.progress p{
+  font-size: 16px;
+  text-decoration: underline;
+
+}
+
+*{
+  font-family: "San Francisco";
+
+}
+
+.carousel{
+  display: none;
+}
+
+#viewAll{
+  cursor: pointer;
+}
+
+
+.carousel{
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  flex-direction: column;
+}
+.carousel-container {
+  width: 80%;
+  overflow: hidden;
+  margin: auto;
+}
+
+.carousel-slide {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+}
+
+.image-placeholder {
+  width: 100%;
+  flex-shrink: 0;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  background-color: #ccc;
+  background-size: cover;
+}
+
+.backDiv{
+  margin-top: 20px;
+  display: flex;
+  justify-content: end;
+  align-items: end;
+}
+
+.backDiv div{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgb(255, 255, 255);
+  /* background: linear-gradient(0deg, rgb(130, 130, 130) 0%, rgb(186, 186, 186) 45%, rgb(80, 80, 80) 100%); */
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+}
+
+.backDiv div:hover{
+  transition: 1s;
+  scale: 1.1;
+}
+.backDiv img{
+  width: 20px;
+  height: 20px;
+}
+
+.cardPieContainer{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardPie{
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.cardPie .rating{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 0, 0, 0);
+}
+
+.card .rating .block{
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background:#000;
+  left: 50%;
+  transform-origin: 50% 150px;
+  transform: rotate(25deg);
+
+  opacity: 0;
+  animation: animate 0.1s linear forwards ;
+}
+
+.card .rating .block2{
+  position: absolute;
+  width: 2px;
+  height: 15px;
+  background:#000;
+  left: 50%;
+  transform-origin: 50% 100px;
+  transform: rotate(25deg);
+
+  opacity: 0;
+  animation: animate 0.1s linear forwards ;
+}
+
+@keyframes animate{
+  to{
+    opacity: 1;
+  }
+}
+
+.card .rating .block:nth-child(-n+76){
+  background: #0f0;
+  box-shadow: 0 0 15px #0f0, 0 0 30px #0f0;
+}
+
+.card .rating h2{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  color: #fff;
+  font-size: 1.5em;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.5em;
+}
+
+.card .rating h2 span{
+  font-size: 2.5em;
+  font-weight: 700;
+}
+
+.card .rating h2 sup{
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.progress{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.results{
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+}
+
+.results .title{
+  font-weight: 600;
+  font-size: 20px;
+  width: 100%;
+}
+.results .title h2{
+  align-self: self-start;
+  text-align: left;
+}
+
+.pieDiv{
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.pieDiv .pieInfo{
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: start;
+}
+
+.infoLine{
+  font-size: 18px;
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 15px;
+}
+
+.infoColor{
+  height: 20px; 
+  width: 20px;
+}
+
+.gradient-text {
+  font-size: 3rem;
+  font-weight: bold;
+  /* Create a linear gradient from white to gray to white */
+  background: linear-gradient(90deg, #ffffff, #cccccc, #ffffff);
+  background-size: 200% auto;
+  /* Animate the background position */
+  animation: gradientLoop 1s linear infinite;
+  
+  /* Apply background-clip so the gradient shows only on the text */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Keyframes to animate the background */
+@keyframes gradientLoop {
+  0% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
