@@ -99,23 +99,3 @@ app.on('activate', () => {
   }
 });
 
-setInterval(async () => {
-  try {
-    // Launch Python script
-    const pythonProcess = spawn("python", ["../../../testing/Focus-App/gazemapping.py"]);
-
-    pythonProcess.stdout.on("data", (data) => {
-      console.log(`Python Output: ${data}`);
-    });
-
-    pythonProcess.stderr.on("data", (data) => {
-      console.error(`Python Error: ${data}`);
-    });
-
-    pythonProcess.on("close", (code) => {
-      console.log(`Python script exited with code ${code}`);
-    });
-  } catch (error) {
-    console.error('Error in automatic message sending:', error);
-  }
-}, 10000);

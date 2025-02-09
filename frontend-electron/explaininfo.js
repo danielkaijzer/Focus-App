@@ -21,9 +21,6 @@ class ExplainInfo {
     // call open ai model to explain shit and return response
     const completion = await this.openai.chat.completions.create({
       model: "anthropic.claude-3.5-sonnet.v2",
-      litellm_params: {
-        modify_params: true
-      },
       messages: [
         { role: "developer", content: "The user is a student, who is struggling with understanding the text they've given. explain the text given by the user in an easily understandable way" },
         {

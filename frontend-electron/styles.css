@@ -108,6 +108,9 @@ body {
       align-items: center;
       position: absolute;
       bottom: 20px;
+      gap: 10px; /* Space between child elements /
+      padding: 10px; / Padding inside the container */
+
     }
 
     input[type="text"] {
