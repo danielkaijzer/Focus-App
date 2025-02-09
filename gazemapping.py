@@ -16,7 +16,7 @@ from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 import uuid
 from python_server import start_gaze_server, read_gaze_data  # Import gaze server
-from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEventLoop
+from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEvent, QEventLoop
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient
 # from sklearn.ensemble import RandomForestRegressor
@@ -63,10 +63,23 @@ screen_midpoint = screen_width // 2
 class Overlay(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
-                            Qt.WindowType.WindowStaysOnTopHint | 
-                            Qt.WindowType.Tool)
+        # self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
+        #                     Qt.WindowType.WindowStaysOnTopHint | 
+        #                     Qt.WindowType.Tool)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            # Qt.WindowType.Tool |  # Optional: removes taskbar icon
+            Qt.WindowType.WindowTransparentForInput 
+            # Qt.WindowType.WindowDoesNotAcceptFocus
+        )
+
+        # Make the window background transparent
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        # self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        # self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
         self.setGeometry(0, 0, screen_width, screen_height)
         self.circle_x = screen_width // 2
         self.circle_y = screen_height // 2
