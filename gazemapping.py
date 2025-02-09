@@ -11,11 +11,14 @@ import collections
 import cv2
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
 import uuid
 from python_server import start_gaze_server, read_gaze_data  # Import gaze server
 from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEventLoop
 from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient
 # from sklearn.ensemble import RandomForestRegressor
 from lightgbm import LGBMRegressor
 import pyautogui  # For capturing screenshots
@@ -26,7 +29,7 @@ parser = argparse.ArgumentParser(description="Run gaze mapping with optional set
 parser.add_argument(
     "--program_duration",
     type=int,
-    default=10,  # Default to 10 seconds
+    default=60,  # Default to 10 seconds
     help="Set the duration of the program in seconds."
 )
 parser.add_argument(
@@ -36,12 +39,12 @@ parser.add_argument(
     help="Set the duration in SECONDS for how long user can get distracted before providing feedback."
 )
 
+
 # Parse arguments
 args = parser.parse_args()
 
 # Use parsed values
 program_duration = args.program_duration
-calibration_enabled = False
 distraction_tolerance = args.distraction_tolerance # seconds
 
 print(f"Program Duration: {program_duration} seconds")
@@ -106,12 +109,31 @@ class Overlay(QWidget):
             for x, y in self.calibration_points:
                 painter.drawEllipse(QPoint(int(x), int(y)), 10, 10)  # Draw green circles
         else:
+            # painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            # pen = QPen(QColor(255, 0, 0))
+            # pen.setWidth(3)
+            # painter.setPen(pen)
+            # painter.setBrush(QColor(255, 0, 0, 127))
+            # painter.drawEllipse(QPoint(self.circle_x, self.circle_y), 20, 20)
+
+            # painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-            pen = QPen(QColor(255, 0, 0))
-            pen.setWidth(3)
-            painter.setPen(pen)
-            painter.setBrush(QColor(255, 0, 0, 127))
-            painter.drawEllipse(QPoint(self.circle_x, self.circle_y), 20, 20)
+
+            # Create a dark overlay
+            painter.fillRect(self.rect(), QColor(0, 0, 0, 100))  # Semi-transparent dark background
+
+            # Create a spotlight effect using a radial gradient
+            self.spotlight_radius = 200 
+            gradient = QRadialGradient(self.circle_x, self.circle_y, self.spotlight_radius)
+            gradient.setColorAt(0.0, QColor(255, 255, 255, 0))    # Fully transparent at center
+            gradient.setColorAt(0.5, QColor(0, 0, 0, 25))         # Midpoint transition (lighter dark)
+            gradient.setColorAt(0.7, QColor(0, 0, 0, 50))        # Steeper fade to dark
+            gradient.setColorAt(1.0, QColor(0, 0, 0, 200))        # Fully dark at the edges
+
+
+            painter.setBrush(QBrush(gradient))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRect(self.rect())
 
 
 # Start OpenFace server and overlay UI
@@ -252,6 +274,7 @@ while True:
 
 
 # 4. Call Calibration Function:
+calibration_enabled = False
 if calibration_enabled:
     calibration_data = calibrate_gaze() # Run before main loop
     print("Calibration Complete:", calibration_data)
@@ -363,15 +386,17 @@ def save_screenshot_data():
     print(f"✅ {len(screenshot_buffer)} screenshot metadata records saved to {SCREENSHOT_METADATA_FILE}")
     screenshot_buffer.clear()  # Clear buffer after writing
 
+screenshot_filename = ""
 
 # Function to take a screenshot and store metadata in buffer
 def take_screenshot():
     global last_screenshot_time
+    global screenshot_filename
 
     timestamp = time.time()  # Get precise timestamp
     dt_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")  # Human-readable
-    filename = f"screenshot_{dt_string}.png"
-    filepath = os.path.join(screenshot_dir, filename)
+    screenshot_filename = f"screenshot_{dt_string}.png"
+    filepath = os.path.join(screenshot_dir, screenshot_filename)
 
     # Capture screenshot
     screenshot = pyautogui.screenshot()
@@ -528,6 +553,60 @@ with open(json_filename, "w") as json_file:
     json.dump(session_analysis, json_file, indent=4)
 
 print(f"📄 Session analysis saved to {json_filename}")
+
+# Generate heatmap overlay image
+
+# Construct the screenshot path
+screenshot_path = f"screenshots/{screenshot_filename}"
+
+# Verify if the file exists
+if not os.path.exists(screenshot_path):
+    print(f"❌ ERROR: Screenshot file not found: {screenshot_path}")
+else:
+    background = cv2.imread(screenshot_path)
+    if background is None:
+        print(f"❌ ERROR: cv2.imread() failed to read {screenshot_path}")
+    else:
+        screenshot_height, screenshot_width, _ = background.shape
+expected_width = 1710
+expected_height = 1107
+screenshot_height, screenshot_width, _ = background.shape
+if screenshot_width == expected_width * 2 and screenshot_height == expected_height * 2:
+    background = cv2.resize(background, (expected_width, expected_height), 
+                          interpolation=cv2.INTER_AREA)
+background = cv2.cvtColor(background, cv2.COLOR_BGR2RGB)
+background = np.flip(background, axis=0)  # Vertical flip
+heatmap, x_edges, y_edges = np.histogram2d(
+    df_output['screen_x'], 
+    df_output['screen_y'], 
+    bins=[screen_width // 10, screen_height // 10]
+)
+heatmap = gaussian_filter(heatmap, sigma=6)
+heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
+# heatmap = np.flip(heatmap, axis=1)  # Flip heatmap horizontally
+# heatmap = np.flip(heatmap, axis=0)  # Flip heatmap horizontally
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.imshow(
+    background,
+    extent=[0, heatmap.shape[0], 0, heatmap.shape[1]],
+    alpha=0.6
+)
+sns.heatmap(
+    heatmap.T,
+    cmap='inferno',
+    alpha=0.5,
+    xticklabels=False,
+    yticklabels=False,
+    cbar=False,
+    ax=ax
+)
+plt.axis("off")
+plt.savefig(
+    "screenshots/gaze_heatmap_overlay.png", 
+    dpi=300, 
+    bbox_inches='tight', 
+    pad_inches=0
+)
 
 
 # Cleanup when exiting
