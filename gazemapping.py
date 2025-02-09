@@ -482,7 +482,24 @@ def update_gaze():
 
         if distracted_counter >= distraction_tolerance * 33:
             print("DISTRACTED")
-            distracted_counter = 0
+            # WRITE TO JSON FILE
+            # Prepare JSON output (all values converted to Python-native types)
+            distracted_JSON = {
+                "distracted": True,  
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),  # Human-readable timestamp
+                "epoch_time": time.time(),
+            }
+
+            # Write to a JSON file
+            json_filename = f"distracted.json"
+            with open(json_filename, "w") as json_file:
+                json.dump(distracted_JSON, json_file, indent=4)
+
+            print(f"📄 Session analysis saved to {json_filename}")
+
+
+
+            distracted_counter = -100
 
 
         # SAVE TO CSV
