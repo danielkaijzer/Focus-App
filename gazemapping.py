@@ -109,6 +109,7 @@ class Overlay(QWidget):
             for x, y in self.calibration_points:
                 painter.drawEllipse(QPoint(int(x), int(y)), 10, 10)  # Draw green circles
         else:
+
             # painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             # pen = QPen(QColor(255, 0, 0))
             # pen.setWidth(3)
@@ -123,7 +124,7 @@ class Overlay(QWidget):
             painter.fillRect(self.rect(), QColor(0, 0, 0, 100))  # Semi-transparent dark background
 
             # Create a spotlight effect using a radial gradient
-            self.spotlight_radius = 200 
+            self.spotlight_radius = 250 
             gradient = QRadialGradient(self.circle_x, self.circle_y, self.spotlight_radius)
             gradient.setColorAt(0.0, QColor(255, 255, 255, 0))    # Fully transparent at center
             gradient.setColorAt(0.5, QColor(0, 0, 0, 25))         # Midpoint transition (lighter dark)
