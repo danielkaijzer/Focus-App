@@ -1,8 +1,10 @@
 import elements from './elements.js';
 import settingsManager from '../settings/settings-manager.js';
 const fs = require('fs');
+const { spawn } = require("child_process");
 
-const geminiTaskAwarenessPrompt = `Format users prompt so that it is in this form: User is working on a very important Hackathon`
+let geminiTaskAwarenessPromptTemplate = `Format users prompt so that it is in this form: User is working on `
+let geminiTaskAwarenessPrompt = ``
 const geminiDistractedPrompt = `User is distracted by something on left side of screen. Tell user in this form what they are being distracted by and remind them of their task: "Hey you are getting distracted by X on the left side of the screen. I saw you looking. Don't forget you wanted to work on Y". Please replace X with specific details of whatever is on the left side of the screen and replace Y with the task user provided earlier. Remember, the form that I gave you is just an example. Do a different variation each time you tried reminding the user`
 
 // Persistent variable that holds the latest timestamp from distracted.json
@@ -134,8 +136,66 @@ export function setupEventListeners(agent) {
     try {
       await ensureAgentReady(agent);
       const text = elements.messageInput.value.trim();
-      await agent.sendText(text);
+      geminiTaskAwarenessPrompt = geminiTaskAwarenessPromptTemplate + text
+
+
+      const distractionFreePromptStart = geminiTaskAwarenessPrompt + ` Your task is helping the user stay focused in their task. Please just give a short confirmation stating that you will help the user (use the pronoun 'You' everytime you talk to the user)`
+      await agent.sendText(distractionFreePromptStart);
+      await agent.startScreenShare();
+      elements.screenBtn.classList.add('active');
       elements.messageInput.value = '';
+
+      try {
+        // Launch Python script
+        const pythonProcess = spawn("python", ["../../../testing/Focus-App/gazemapping.py"]);
+
+        pythonProcess.stdout.on("data", (data) => {
+          console.log(`Python Output: ${data}`);
+        });
+
+        pythonProcess.stderr.on("data", (data) => {
+          console.error(`Python Error: ${data}`);
+        });
+
+        pythonProcess.on("close", (code) => {
+          console.log(`Python script exited with code ${code}`);
+        });
+      } catch (error) {
+        console.error('Error in automatic message sending:', error);
+      }
+
+      // Distracted button click
+      setInterval(async () => {
+        try {
+          // Synchronously read the file 'distracted.json' in UTF-8 encoding
+          const data = fs.readFileSync('distracted.json', 'utf8');
+
+          // Parse the file content as JSON
+          const jsonData = JSON.parse(data);
+
+          // Log the parsed JSON data
+          console.log("Parsed JSON data:", jsonData);
+
+          // Compare the JSON timestamp with the persistent latestTimestamp
+          const fileTimestamp = jsonData.timestamp;
+
+          // Check if latestTimestamp is null (first run) or if the new timestamp is newer
+          if (latestTimestamp === null || fileTimestamp > latestTimestamp) {
+            numberOfDistracted++;
+            latestTimestamp = fileTimestamp;
+            const geminiDistractedPromptAggresive = geminiDistractedPrompt + `This is the ${numberOfDistracted} time the user is getting distracted. Be more aggresive if the number is bigger. AND YOU DON'T NEED TO SAY YOU UNDERSTAND, I ALREADY KNOW. JUST NOTIFY THE USER IMMEDIATELY`
+            console.log("Updated latestTimestamp to:", latestTimestamp);
+            await ensureAgentReady(agent);
+            await agent.sendTextForContext(geminiTaskAwarenessPrompt);
+            await agent.sendText(geminiDistractedPromptAggresive);
+          } else {
+            console.log("latestTimestamp remains unchanged:", latestTimestamp);
+          }
+        } catch (error) {
+          console.error('Error reading or parsing distracted.json:', error);
+        }
+      }, 5000);
+
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -153,37 +213,6 @@ export function setupEventListeners(agent) {
   elements.settingsBtn.addEventListener('click', () => settingsManager.show());
 
 
-  // Distracted button click
-  setInterval(async () => {
-    try {
-      // Synchronously read the file 'distracted.json' in UTF-8 encoding
-      const data = fs.readFileSync('distracted.json', 'utf8');
-
-      // Parse the file content as JSON
-      const jsonData = JSON.parse(data);
-
-      // Log the parsed JSON data
-      console.log("Parsed JSON data:", jsonData);
-
-      // Compare the JSON timestamp with the persistent latestTimestamp
-      const fileTimestamp = jsonData.timestamp;
-
-      // Check if latestTimestamp is null (first run) or if the new timestamp is newer
-      if (latestTimestamp === null || fileTimestamp > latestTimestamp) {
-        numberOfDistracted++;
-        latestTimestamp = fileTimestamp;
-        const geminiDistractedPromptAggresive = geminiDistractedPrompt + `This is the ${numberOfDistracted} time the user is getting distracted. Be more aggresive if the number is bigger. AND YOU DON'T NEED TO SAY YOU UNDERSTAND, I ALREADY KNOW. JUST NOTIFY THE USER IMMEDIATELY`
-        console.log("Updated latestTimestamp to:", latestTimestamp);
-        await ensureAgentReady(agent);
-        await agent.sendTextForContext(geminiTaskAwarenessPrompt);
-        await agent.sendText(geminiDistractedPromptAggresive);
-      } else {
-        console.log("latestTimestamp remains unchanged:", latestTimestamp);
-      }
-    } catch (error) {
-      console.error('Error reading or parsing distracted.json:', error);
-    }
-  }, 5000);
 
 }
 
