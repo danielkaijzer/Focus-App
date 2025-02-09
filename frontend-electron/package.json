@@ -1,0 +1,29 @@
+{
+  "name": "electron-gemini",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "electron": "^34.1.1"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.3",
+    "openai": "^4.83.0",
+    "simple-peer": "^9.11.1",
+    "socket.io": "^4.8.1",
+    "webrtc-adapter": "^9.0.1",
+    "ws": "^8.18.0"
+  }
+}

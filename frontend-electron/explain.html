@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summary of selected text</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        
+        const userprompt = params.get("prompt");
+        const answer = params.get("answer");
+        
+
+        document.body.innerHTML= `
+        <div id="summaryHistory" class="chat-history">
+            <div class="chat-message user-message">
+                ${userprompt}
+            </div>
+            <div class="chat-message model-message">
+                ${answer}
+            </div>
+        </div>`;
+    </script>
+</body>
+</html>
