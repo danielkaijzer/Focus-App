@@ -11,6 +11,7 @@ Post-Session_Analysis.ipynb
 gaze_heatmap_overlay.png
 test_screenshot.png
 gaze_heatmap.png
+distracted.json
 
 # Ignore dynamically named CSV files
 gaze_tracking_*.csv

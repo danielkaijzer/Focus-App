@@ -20,22 +20,28 @@ from PyQt6.QtCore import QTimer, Qt, QPoint, QObject, QEvent, QEventLoop
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient
 # from sklearn.ensemble import RandomForestRegressor
-from lightgbm import LGBMRegressor
+# from lightgbm import LGBMRegressor
+from xgboost import XGBRegressor
 import pyautogui  # For capturing screenshots
 import argparse
+
+# Parameters
+calibration_enabled = False
+ONESHOT = True # if we take one screenshot at end, make true
+
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description="Run gaze mapping with optional settings.")
 parser.add_argument(
     "--program_duration",
     type=int,
-    default=60,  # Default to 10 seconds
+    default=60,  # Default to 60 seconds
     help="Set the duration of the program in seconds."
 )
 parser.add_argument(
     "--distraction_tolerance",
     type=int,
-    default=5,  # Default to 10 seconds
+    default=5,  # Default to 5 seconds
     help="Set the duration in SECONDS for how long user can get distracted before providing feedback."
 )
 
@@ -63,22 +69,16 @@ screen_midpoint = screen_width // 2
 class Overlay(QWidget):
     def __init__(self):
         super().__init__()
-        # self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
-        #                     Qt.WindowType.WindowStaysOnTopHint | 
-        #                     Qt.WindowType.Tool)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
-            # Qt.WindowType.Tool |  # Optional: removes taskbar icon
             Qt.WindowType.WindowTransparentForInput 
-            # Qt.WindowType.WindowDoesNotAcceptFocus
         )
 
         # Make the window background transparent
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        # self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        # self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setAutoFillBackground(True)
 
         self.setGeometry(0, 0, screen_width, screen_height)
         self.circle_x = screen_width // 2
@@ -123,7 +123,6 @@ class Overlay(QWidget):
                 painter.drawEllipse(QPoint(int(x), int(y)), 10, 10)  # Draw green circles
         else:
 
-            # painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             # pen = QPen(QColor(255, 0, 0))
             # pen.setWidth(3)
             # painter.setPen(pen)
@@ -131,19 +130,33 @@ class Overlay(QWidget):
             # painter.drawEllipse(QPoint(self.circle_x, self.circle_y), 20, 20)
 
             # painter = QPainter(self)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            # painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
             # Create a dark overlay
-            painter.fillRect(self.rect(), QColor(0, 0, 0, 100))  # Semi-transparent dark background
+            # painter.fillRect(self.rect(), QColor(0, 0, 0, 0))  # Semi-transparent dark background
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
+            painter.fillRect(self.rect(), QColor(0, 0, 0, 0))
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
 
             # Create a spotlight effect using a radial gradient
-            self.spotlight_radius = 250 
+            self.spotlight_radius = 400 
             gradient = QRadialGradient(self.circle_x, self.circle_y, self.spotlight_radius)
             gradient.setColorAt(0.0, QColor(255, 255, 255, 0))    # Fully transparent at center
-            gradient.setColorAt(0.5, QColor(0, 0, 0, 25))         # Midpoint transition (lighter dark)
-            gradient.setColorAt(0.7, QColor(0, 0, 0, 50))        # Steeper fade to dark
+            # gradient.setColorAt(0.5, QColor(0, 0, 0, 0))         # Midpoint transition (lighter dark)
+            gradient.setColorAt(0.7, QColor(0, 0, 0, 0))        # Steeper fade to dark
             gradient.setColorAt(1.0, QColor(0, 0, 0, 200))        # Fully dark at the edges
 
+
+            # OPTIONAL: Draw a hard-edged circle on top
+            # border_pen = QPen(QColor("red"))  # or whatever color you want
+            # border_pen.setWidth(1)
+            # painter.setPen(border_pen)
+            # painter.setBrush(Qt.BrushStyle.NoBrush)
+            # painter.drawEllipse(
+            #     QPoint(self.circle_x, self.circle_y),
+            #     self.spotlight_radius,
+            #     self.spotlight_radius
+            # )
 
             painter.setBrush(QBrush(gradient))
             painter.setPen(Qt.PenStyle.NoPen)
@@ -153,9 +166,6 @@ class Overlay(QWidget):
 # Start OpenFace server and overlay UI
 overlay = Overlay()
 client_socket, process = start_gaze_server()
-
-# calibration_enabled = False
-ONESHOT = True # if we take one screenshot at end, make true
 
 # 1. Calibration Points:
 CALIBRATION_POINTS = [
@@ -288,10 +298,17 @@ while True:
 
 
 # 4. Call Calibration Function:
-calibration_enabled = False
-if calibration_enabled:
-    calibration_data = calibrate_gaze() # Run before main loop
+# if calibration_enabled:
+#     calibration_data = calibrate_gaze() # Run before main loop
+#     print("Calibration Complete:", calibration_data)
+def start_calibration():
+    global calibration_data
+    calibration_data = calibrate_gaze()
     print("Calibration Complete:", calibration_data)
+    # Optionally start or resume other routines here
+
+if calibration_enabled:
+    QTimer.singleShot(0, start_calibration)
 
 
 def train_model_from_csv(filename="calibration_data.csv"):
@@ -316,8 +333,10 @@ def train_model_from_csv(filename="calibration_data.csv"):
     # # Train models
     # x_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
     # y_model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
-    x_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
-    y_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
+    # x_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
+    # y_model = LGBMRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
+    x_model = XGBRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
+    y_model = XGBRegressor(n_estimators=200, max_depth=8, learning_rate=0.05, random_state=42)
 
 
     x_model.fit(X, y_x)
@@ -449,10 +468,10 @@ def save_gaze_data():
     gaze_buffer.clear()  # Clear buffer after writing
 
 # For moving averaging (SMOOTHING)
-N = 25  # Number of frames to average over (HIGHER IS SMOOTHER)
+N = 40  # Number of frames to average over (HIGHER IS SMOOTHER)
 gaze_positions = collections.deque(maxlen=N)
 gaze_buffer = []
-BUFFER_SIZE = 30  # Write every 30 frames (about once per second)
+BUFFER_SIZE = 60  # Write every 30 frames (about once per second)
 
 last_screenshot_time = time.time() # init screenshot time
 
