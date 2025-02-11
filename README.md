@@ -24,3 +24,6 @@ Inside main repo: folder called `external_libs`, this contains external librarie
 `export QT_QPA_PLATFORM_PLUGIN_PATH=/opt/anaconda3/envs/focus_env/lib/python3.10/site-packages/PyQt6/Qt6/plugins/platforms` 
 
 `python gazemapping.py`
+
+## License
+This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
