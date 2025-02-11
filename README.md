@@ -1,3 +1,23 @@
+# Focus Monsters - Focal
+
+## Description
+Focal is a productivity app designed to accurately monitor focus during a work session using accurate gaze to screen coordinate mapping and screen capture analysis via VLM. The application has context-awareness on which part of the screen the user is focusing by looking at user's eyegazes through the webcam.
+
+## Toolchain used:
+- OpenFace library: For eyetracking functionality (we did our own edits on the library to fulfill the requirements of our app)
+- Electron: The UI framework we use
+
+## Project Setup
+To set up the project environment:
+1. Clone the repository
+2. Navigate to the project directory
+3. Make sure npm is installed in your system
+   
+## Running the application:
+1. Install the necessary library by running `npm install`
+2. Run `npm start` to start the application
+
+## Notes
 Inside main repo: folder called `external_libs`, this contains external libraries like `openFace`
 
 
