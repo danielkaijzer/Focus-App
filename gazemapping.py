@@ -35,13 +35,13 @@ parser = argparse.ArgumentParser(description="Run gaze mapping with optional set
 parser.add_argument(
     "--program_duration",
     type=int,
-    default=60,  # Default to 60 seconds
+    default=90,  # Default to 60 seconds
     help="Set the duration of the program in seconds."
 )
 parser.add_argument(
     "--distraction_tolerance",
     type=int,
-    default=5,  # Default to 5 seconds
+    default=1,  # Default to 5 seconds
     help="Set the duration in SECONDS for how long user can get distracted before providing feedback."
 )
 
@@ -169,15 +169,15 @@ client_socket, process = start_gaze_server()
 
 # 1. Calibration Points:
 CALIBRATION_POINTS = [
-    (screen_width * 0.05, screen_height * 0.05),       # Very near top-left
-    (screen_width * 0.95, screen_height * 0.05),       # Very near top-right
-    (screen_width * 0.05, screen_height * 0.95),       # Very near bottom-left
-    (screen_width * 0.95, screen_height * 0.95),       # Very near bottom-right
+    # (screen_width * 0.05, screen_height * 0.05),       # Very near top-left
+    # (screen_width * 0.95, screen_height * 0.05),       # Very near top-right
+    # (screen_width * 0.05, screen_height * 0.95),       # Very near bottom-left
+    # (screen_width * 0.95, screen_height * 0.95),       # Very near bottom-right
     (screen_width // 2, screen_height // 2),      # Center
-    (screen_width // 2, screen_height * 0.05),       # Top-center
-    (screen_width // 2,  screen_height * 0.95),   # Bottom-center
-    (screen_width // 8, screen_height // 2),       # Left-center
-    (7 * screen_width // 8, screen_height // 2)    # Right-center
+    # (screen_width // 2, screen_height * 0.05),       # Top-center
+    # (screen_width // 2,  screen_height * 0.95),   # Bottom-center
+    (screen_width // 3, screen_height // 2),       # Left-center
+    (2 * screen_width // 3, screen_height // 2)    # Right-center
 ]
 
 # 2. Calibration Data Storage:
@@ -468,8 +468,9 @@ def save_gaze_data():
     gaze_buffer.clear()  # Clear buffer after writing
 
 # For moving averaging (SMOOTHING)
-N = 40  # Number of frames to average over (HIGHER IS SMOOTHER)
-gaze_positions = collections.deque(maxlen=N)
+SMOOTHING_WINDOW = 250  # Number of frames to average over (HIGHER IS SMOOTHER)
+MOVEMENT_THRESHOLD = 50  # Minimum pixel change required to update position
+gaze_positions = collections.deque(maxlen=SMOOTHING_WINDOW)
 gaze_buffer = []
 BUFFER_SIZE = 60  # Write every 30 frames (about once per second)
 
@@ -477,10 +478,36 @@ last_screenshot_time = time.time() # init screenshot time
 
 distracted_counter = 0
 
+last_valid_position = (screen_width//2, screen_height//2)
+
+class SmoothingBuffer:
+    def __init__(self, window_size=35):
+        self.positions = collections.deque(maxlen=window_size)
+        self.last_position = None
+        
+    def add_position(self, x, y):
+        self.positions.append((x, y))
+        
+        # Calculate exponential moving average
+        if len(self.positions) > 1:
+            alpha = 0.2  # Smoothing factor (0-1, lower = smoother)
+            ema_x = self.positions[0][0]
+            ema_y = self.positions[0][1]
+            for px, py in self.positions:
+                ema_x = alpha * px + (1 - alpha) * ema_x
+                ema_y = alpha * py + (1 - alpha) * ema_y
+            return ema_x, ema_y
+        else:
+            return x, y
+        
+# # Initialize buffers
+gaze_smooth_buffer = SmoothingBuffer(window_size=SMOOTHING_WINDOW)
+
 # MAIN LOOP AFTER CALIBRATION
 def update_gaze():
     global last_screenshot_time
     global distracted_counter
+    global last_valid_position
 
     gaze_data = read_gaze_data(client_socket)
     # print("Gaze Data:", gaze_data)
@@ -552,13 +579,54 @@ def update_gaze():
 
         # print(f"Screen X: {x}, Screen Y: {y}, Timestamp: {timestamp}")
 
-        gaze_positions.append((x, y))
+        # gaze_positions.append((x, y))
 
-        # Calculate moving average
-        avg_x = sum(pos[0] for pos in gaze_positions) / len(gaze_positions)
-        avg_y = sum(pos[1] for pos in gaze_positions) / len(gaze_positions)
+        # # Calculate moving average
+        # avg_x = sum(pos[0] for pos in gaze_positions) / len(gaze_positions)
+        # avg_y = sum(pos[1] for pos in gaze_positions) / len(gaze_positions)
 
-        overlay.update_position(int(avg_x), int(avg_y))
+        # overlay.update_position(int(avg_x), int(avg_y))
+
+        # Apply enhanced smoothing
+        smoothed_x, smoothed_y = gaze_smooth_buffer.add_position(x, y)
+        
+        # Calculate movement distance from last position
+        dx = smoothed_x - last_valid_position[0]
+        dy = smoothed_y - last_valid_position[1]
+        # dx = avg_x - last_valid_position[0]
+        # dy = avg_y - last_valid_position[1]
+        distance = (dx**2 + dy**2)**0.5
+
+        VELOCITY_SMOOTHING = 0.8  # 0-1 (higher = smoother)
+        current_velocity = [0, 0]
+
+        # Inside update_gaze after getting smoothed_x/smoothed_y:
+        vx = (smoothed_x - last_valid_position[0]) * VELOCITY_SMOOTHING
+        vy = (smoothed_y - last_valid_position[1]) * VELOCITY_SMOOTHING
+        current_velocity = [vx * 0.2 + current_velocity[0] * 0.8,
+                            vy * 0.2 + current_velocity[1] * 0.8]
+
+        # Apply velocity prediction
+        predicted_x = smoothed_x + current_velocity[0]
+        predicted_y = smoothed_y + current_velocity[1]
+
+        dynamic_threshold = max(MOVEMENT_THRESHOLD, 5 * (abs(vx) + abs(vy)))
+
+        TEMPORAL_WEIGHT = 0.9  # Weight for previous position
+
+        # When updating position:
+        final_x = TEMPORAL_WEIGHT * last_valid_position[0] + (1-TEMPORAL_WEIGHT) * smoothed_x
+        final_y = TEMPORAL_WEIGHT * last_valid_position[1] + (1-TEMPORAL_WEIGHT) * smoothed_y
+
+        
+        # Only update if movement exceeds threshold or we have no previous position
+        if distance > MOVEMENT_THRESHOLD or last_valid_position is None:
+            last_valid_position = (final_x, final_y)
+            overlay.update_position(int(final_x), int(final_y))
+            # last_valid_position = (avg_x,avg_y)
+            # overlay.update_position(int(avg_x), int(avg_y))
+
+
     else:
         print("Incomplete gaze data")
 
