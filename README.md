@@ -1,4 +1,4 @@
-# Focus Monsters - Focal
+# Focal
 
 ## Description
 Focal is a productivity app designed to accurately monitor focus during a work session using accurate gaze to screen coordinate mapping and screen capture analysis via VLM. The application has context-awareness on which part of the screen the user is focusing by looking at user's eyegazes through the webcam.
